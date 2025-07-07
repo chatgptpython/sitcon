@@ -50,11 +50,25 @@ module.exports = async (req, res) => {
     }
 
     console.log(`📦 Aantal producten gevonden: ${producten.length}`);
-    console.log(`🔎 Voorbeeld ID's: ${producten.slice(0, 5).map(p => p['g:id']).join(', ')}`);
+    console.log(`🔎 Eerste 5 ID's: ${producten.slice(0, 5).map(p => {
+      const id = p['g:id'];
+      if (typeof id === 'object') return id['#text'];
+      return id;
+    }).join(', ')}`);
 
+    // ✅ Veilig zoeken met fallback voor object of string
     const match = producten.find(p => {
-      const id = typeof p['g:id'] === 'object' ? p['g:id']['#text']?.trim() : (p['g:id'] || '').trim();
-      return id === artikelnummer.trim();
+      const rawId = p['g:id'];
+
+      if (typeof rawId === 'object' && rawId !== null && '#text' in rawId) {
+        return rawId['#text'].trim() === artikelnummer.trim();
+      }
+
+      if (typeof rawId === 'string') {
+        return rawId.trim() === artikelnummer.trim();
+      }
+
+      return false;
     });
 
     if (!match) {
@@ -63,7 +77,7 @@ module.exports = async (req, res) => {
     }
 
     const result = {
-      Artikelnummer: match['g:id'],
+      Artikelnummer: typeof match['g:id'] === 'object' ? match['g:id']['#text'] : match['g:id'],
       Titel: match.title,
       Prijs: match['g:price'],
       Voorraad: match['g:availability'],
