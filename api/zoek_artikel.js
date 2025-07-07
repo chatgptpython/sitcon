@@ -21,7 +21,7 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Geen artikelnummer opgegeven.' });
     }
 
-    console.log(`🔍 Artikelnummer ontvangen: ${artikelnummer}`);
+    console.log(`🔍 Gevraagd artikelnummer: "${artikelnummer}"`);
 
     const feedUrl = 'https://files.channable.com/JLuZCPOeK9iW4bKR-P7IDA==.xml';
     const response = await fetch(feedUrl);
@@ -49,9 +49,16 @@ module.exports = async (req, res) => {
       return res.status(500).json({ error: 'Geen producten gevonden in XML.' });
     }
 
-    const match = producten.find(p => p['g:id'] === artikelnummer);
+    console.log(`📦 Aantal producten gevonden: ${producten.length}`);
+    console.log(`🔎 Voorbeeld ID's: ${producten.slice(0, 5).map(p => p['g:id']).join(', ')}`);
+
+    const match = producten.find(p => {
+      const id = (p['g:id'] || '').trim();
+      return id === artikelnummer.trim();
+    });
 
     if (!match) {
+      console.warn(`❌ Artikelnummer ${artikelnummer} niet gevonden in XML`);
       return res.status(404).json({ error: `Artikelnummer ${artikelnummer} niet gevonden.` });
     }
 
@@ -65,6 +72,8 @@ module.exports = async (req, res) => {
       Afbeelding: match['g:image_link'],
       Categorie: match['g:product_type']
     };
+
+    console.log('✅ Product gevonden:', result);
 
     return res.status(200).json(result);
 
