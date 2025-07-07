@@ -52,23 +52,21 @@ module.exports = async (req, res) => {
     console.log(`📦 Aantal producten gevonden: ${producten.length}`);
     console.log(`🔎 Eerste 5 ID's: ${producten.slice(0, 5).map(p => {
       const id = p['g:id'];
-      if (typeof id === 'object') return id['#text'];
+      if (typeof id === 'object' && id !== null && '#text' in id) {
+        return id['#text'];
+      }
       return id;
     }).join(', ')}`);
 
-    // ✅ Veilig zoeken met fallback voor object of string
+    // ✅ Verbeterde veilige ID-matching
     const match = producten.find(p => {
       const rawId = p['g:id'];
+      const id = typeof rawId === 'object' && rawId !== null && '#text' in rawId
+        ? String(rawId['#text']).trim()
+        : String(rawId).trim();
 
-      if (typeof rawId === 'object' && rawId !== null && '#text' in rawId) {
-        return rawId['#text'].trim() === artikelnummer.trim();
-      }
-
-      if (typeof rawId === 'string') {
-        return rawId.trim() === artikelnummer.trim();
-      }
-
-      return false;
+      const target = String(artikelnummer).trim();
+      return id === target;
     });
 
     if (!match) {
