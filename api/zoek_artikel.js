@@ -53,7 +53,7 @@ module.exports = async (req, res) => {
     console.log(`🔎 Voorbeeld ID's: ${producten.slice(0, 5).map(p => p['g:id']).join(', ')}`);
 
     const match = producten.find(p => {
-      const id = (p['g:id'] || '').trim();
+      const id = typeof p['g:id'] === 'object' ? p['g:id']['#text']?.trim() : (p['g:id'] || '').trim();
       return id === artikelnummer.trim();
     });
 
